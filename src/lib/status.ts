@@ -21,7 +21,7 @@ export function bundleStatus(
   latestCollected: boolean | number | null
 ): BundleStatus {
   if (!latestDate) {
-    return { assigned: false, label: "No assignments", date: null };
+    return { assigned: false, label: "No Bundle Assigned", date: null };
   }
   const collected = Boolean(latestCollected);
   if (!collected) {
