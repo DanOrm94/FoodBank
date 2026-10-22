@@ -50,7 +50,36 @@ export const users = sqliteTable("users", {
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
-  householdSize: integer("household_size").default(1),
+  familySize: integer("family_size").notNull().default(1),
+  contact: integer("contact").notNull().default(0),
+  dietaryRequirements: text("dietary_requirements"),
+  notes: text("notes"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Bundle assignments to users (green action). "Bundle Status" is derived
+// from the user's most recent assignment.
+export const assignments = sqliteTable("assignments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  bundleId: integer("bundle_id").references(() => bundles.id, {
+    onDelete: "set null",
+  }),
+  assignedDate: text("assigned_date").notNull(), // ISO yyyy-mm-dd
+  collected: integer("collected", { mode: "boolean" }).notNull().default(false),
+  notes: text("notes"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Attendance / visit records for a user (blue action).
+export const attendance = sqliteTable("attendance", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  visitDate: text("visit_date").notNull(), // ISO yyyy-mm-dd
   notes: text("notes"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
@@ -83,3 +112,5 @@ export type Bundle = typeof bundles.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Volunteer = typeof volunteers.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
+export type Assignment = typeof assignments.$inferSelect;
+export type Attendance = typeof attendance.$inferSelect;

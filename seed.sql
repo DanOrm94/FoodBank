@@ -2,6 +2,8 @@
 -- NOTE: the admin login account is NOT created here. Visit /setup once after
 -- deploying to create it (password hashing must run at runtime).
 
+DELETE FROM attendance;
+DELETE FROM assignments;
 DELETE FROM bundle_items;
 DELETE FROM bundles;
 DELETE FROM food_stock;
@@ -32,12 +34,55 @@ INSERT INTO food_stock (item_name, quantity, expiry_date, location, category) VA
   ('UHT milk 1L', 20, '2026-10-30', 'Shelf', 'Dairy'),
   ('teabags 80pk', 14, '2027-01-15', 'Cupboard_5', 'Drinks');
 
--- Registered users (recipients)
-INSERT INTO users (name, email, phone, address, household_size, notes) VALUES
-  ('John Smith', 'john.smith@example.com', '07700900001', '12 Oak Street, Manchester', 4, 'Referred by social services'),
-  ('Mary Jones', 'mary.jones@example.com', '07700900002', '5 Elm Road, Manchester', 2, NULL),
-  ('David Wilson', NULL, '07700900003', '88 Birch Lane, Manchester', 1, 'Prefers no nuts'),
-  ('Sarah Brown', 'sarah.brown@example.com', '07700900004', '3 Maple Court, Manchester', 5, NULL);
+-- Registered users (recipients) — from the Food Bank Users screen.
+-- dietary_requirements is free text; contact shown as a count (0).
+INSERT INTO users (name, family_size, contact, dietary_requirements) VALUES
+  ('Mercy fremah sarfo', 3, 0, 'none'),
+  ('Abla Anani', 3, 0, 'no dairy for Mum but she will take for the children'),
+  ('Linda Cleary', 2, 0, 'none'),
+  ('Karen McDremott', 2, 0, 'none'),
+  ('Lisa Smith', 2, 0, 'none'),
+  ('Anne Crawford', 1, 0, 'none as she is aware'),
+  ('Janice Lancaster', 1, 0, 'none'),
+  ('Doreen Grafton', 2, 0, 'none'),
+  ('Julie Syrimis', 1, 0, 'no pork'),
+  ('Olivia Durand', 2, 0, 'none'),
+  ('Naomi Doye', 2, 0, 'none'),
+  ('susan Fox', 3, 0, 'none'),
+  ('ella dankwah', 4, 0, 'no'),
+  ('John Hall', 2, 0, 'unknown'),
+  ('Debra White', 3, 0, 'none'),
+  ('Elizabeth Ooto', 2, 0, 'No Pork');
+
+-- Assignments drive the "Bundle Status" pill:
+--   latest assignment collected = 0 and recent  -> green  "Assigned: dd/mm/yyyy"
+--   otherwise                                   -> red    "Last Assignment: dd/mm/yyyy"
+-- Dates below reproduce the screenshot (green rows use 2026-10-22).
+INSERT INTO assignments (user_id, bundle_id, assigned_date, collected) VALUES
+  (1,  NULL, '2026-10-01', 1),  -- Mercy  (red, last)
+  (2,  1,    '2026-10-22', 0),  -- Abla   (green, assigned)
+  (3,  NULL, '2026-10-15', 1),  -- Linda  (red)
+  (4,  NULL, '2026-10-08', 1),  -- Karen  (red)
+  (5,  1,    '2026-10-22', 0),  -- Lisa   (green)
+  (6,  NULL, '2026-02-26', 1),  -- Anne   (red)
+  (7,  NULL, '2026-09-17', 1),  -- Janice (red)
+  (8,  NULL, '2026-01-29', 1),  -- Doreen (red)
+  (9,  NULL, '2026-08-13', 1),  -- Julie  (red)
+  (10, NULL, '2026-07-23', 1),  -- Olivia (red)
+  (11, 2,    '2026-10-22', 0),  -- Naomi  (green)
+  (12, 2,    '2026-10-22', 0),  -- susan  (green)
+  (13, NULL, '2026-07-30', 1),  -- ella   (red)
+  (14, 1,    '2026-10-22', 0),  -- John Hall (green)
+  (15, 1,    '2026-10-22', 0),  -- Debra  (green)
+  (16, NULL, '2026-08-20', 1);  -- Elizabeth (red)
+
+-- Some attendance history
+INSERT INTO attendance (user_id, visit_date, notes) VALUES
+  (2,  '2026-10-22', 'Collected bundle'),
+  (5,  '2026-10-22', 'Collected bundle'),
+  (1,  '2026-10-01', 'Collected bundle'),
+  (11, '2026-10-22', NULL),
+  (12, '2026-10-22', NULL);
 
 -- Volunteers
 INSERT INTO volunteers (name, email, phone, role, availability, active) VALUES
