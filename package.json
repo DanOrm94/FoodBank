@@ -1,0 +1,25 @@
+{
+  "name": "foodbank-manager",
+  "version": "1.0.0",
+  "description": "Food Bank Manager - Cloudflare Workers + D1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply foodbank-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply foodbank-db --remote",
+    "db:seed:local": "wrangler d1 execute foodbank-db --local --file=./seed.sql",
+    "db:seed:remote": "wrangler d1 execute foodbank-db --remote --file=./seed.sql"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.36.4",
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "drizzle-kit": "^0.28.1",
+    "wrangler": "^3.95.0"
+  }
+}

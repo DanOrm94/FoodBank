@@ -1,0 +1,69 @@
+-- Food Bank Manager schema
+
+CREATE TABLE IF NOT EXISTS accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'staff',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS food_stock (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_name TEXT NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 0,
+  expiry_date TEXT,
+  location TEXT,
+  category TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bundles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bundle_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  bundle_id INTEGER NOT NULL REFERENCES bundles(id) ON DELETE CASCADE,
+  stock_id INTEGER NOT NULL REFERENCES food_stock(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  household_size INTEGER DEFAULT 1,
+  notes TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS volunteers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  role TEXT,
+  availability TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  description TEXT NOT NULL,
+  amount REAL NOT NULL DEFAULT 0,
+  category TEXT,
+  date TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_food_stock_expiry ON food_stock(expiry_date);
+CREATE INDEX IF NOT EXISTS idx_bundle_items_bundle ON bundle_items(bundle_id);

@@ -1,0 +1,17 @@
+name = "foodbank-manager"
+main = "src/index.tsx"
+compatibility_date = "2024-12-18"
+compatibility_flags = ["nodejs_compat"]
+
+# Secrets (set via Cloudflare dashboard or `wrangler secret put`):
+#   SESSION_SECRET  - random string used to sign session cookies
+
+[[d1_databases]]
+binding = "DB"
+database_name = "foodbank-db"
+# Replace with your real database_id after running: wrangler d1 create foodbank-db
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[observability]
+enabled = true
