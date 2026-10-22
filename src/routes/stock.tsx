@@ -25,10 +25,11 @@ const stock = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const fields = (row?: Record<string, unknown>): Field[] => [
   { name: "itemName", label: "Item Name", required: true, value: row?.itemName as string },
+  { name: "category", label: "Type", value: row?.category as string },
   { name: "quantity", label: "Quantity", type: "number", required: true, value: (row?.quantity as number) ?? 0 },
+  { name: "checkInDate", label: "Check In Date", type: "date", value: row?.checkInDate as string },
   { name: "expiryDate", label: "Expiry Date", type: "date", value: row?.expiryDate as string },
   { name: "location", label: "Location", value: row?.location as string },
-  { name: "category", label: "Category", value: row?.category as string },
 ];
 
 stock.get("/", async (c) => {
@@ -80,6 +81,7 @@ stock.post("/", async (c) => {
   await db.insert(foodStock).values({
     itemName: String(b.itemName || ""),
     quantity: parseInt(String(b.quantity || "0"), 10) || 0,
+    checkInDate: String(b.checkInDate || "") || null,
     expiryDate: String(b.expiryDate || "") || null,
     location: String(b.location || "") || null,
     category: String(b.category || "") || null,
@@ -98,10 +100,11 @@ stock.get("/:id", async (c) => {
       <h3>{item.itemName}</h3>
       <div class="card feature-card">
         <ul class="list-group list-group-flush">
+          <li class="list-group-item"><strong>Type:</strong> {item.category || "-"}</li>
           <li class="list-group-item"><strong>Quantity:</strong> {item.quantity}</li>
+          <li class="list-group-item"><strong>Check In:</strong> {fmtDate(item.checkInDate)}</li>
           <li class="list-group-item"><strong>Expiry Date:</strong> {fmtDate(item.expiryDate)}</li>
           <li class="list-group-item"><strong>Location:</strong> {item.location || "-"}</li>
-          <li class="list-group-item"><strong>Category:</strong> {item.category || "-"}</li>
         </ul>
       </div>
       <div class="mt-3">
@@ -139,6 +142,7 @@ stock.post("/:id", async (c) => {
     .set({
       itemName: String(b.itemName || ""),
       quantity: parseInt(String(b.quantity || "0"), 10) || 0,
+      checkInDate: String(b.checkInDate || "") || null,
       expiryDate: String(b.expiryDate || "") || null,
       location: String(b.location || "") || null,
       category: String(b.category || "") || null,

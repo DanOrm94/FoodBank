@@ -41,3 +41,25 @@ export function bundleStatus(
 export function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+export type ExpiryState = "expired" | "soon" | "ok";
+
+// Classifies an expiry date relative to today.
+// expired: in the past. soon: within the next 30 days. ok: further out.
+export function expiryState(
+  iso?: string | null,
+  soonDays = 30
+): ExpiryState {
+  if (!iso) return "ok";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "ok";
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round(
+    (target.getTime() - today.getTime()) / 86_400_000
+  );
+  if (diffDays < 0) return "expired";
+  if (diffDays <= soonDays) return "soon";
+  return "ok";
+}

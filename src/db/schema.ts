@@ -16,9 +16,10 @@ export const foodStock = sqliteTable("food_stock", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   itemName: text("item_name").notNull(),
   quantity: integer("quantity").notNull().default(0),
+  checkInDate: text("check_in_date"), // ISO yyyy-mm-dd
   expiryDate: text("expiry_date"), // ISO yyyy-mm-dd
   location: text("location"),
-  category: text("category"),
+  category: text("category"), // shown as "Type"
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

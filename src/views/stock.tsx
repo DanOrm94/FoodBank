@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { FoodStock } from "../db/schema";
-import { fmtDate } from "../lib/status";
+import { fmtDate, expiryState } from "../lib/status";
 
 export interface LocationGroup {
   location: string;
@@ -60,22 +60,33 @@ export const FoodItemsPage: FC<{ groups: LocationGroup[] }> = ({ groups }) => {
                     <table class="table table-hover mb-0 align-middle">
                       <thead>
                         <tr>
-                          <th>Item Name</th>
+                          <th>Name</th>
+                          <th>Type</th>
                           <th>Quantity</th>
-                          <th>Expiry Date</th>
-                          <th>Category</th>
+                          <th>Check In</th>
+                          <th>Expiry</th>
                           <th class="text-end">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {g.items.map((it) => (
+                        {g.items.map((it) => {
+                          const st = expiryState(it.expiryDate);
+                          return (
                           <tr class="stock-row" data-name={(it.itemName || "").toLowerCase()} data-category={(it.category || "").toLowerCase()}>
                             <td>
                               <a href={`/stock/${it.id}`}>{it.itemName}</a>
                             </td>
-                            <td>{it.quantity}</td>
-                            <td>{fmtDate(it.expiryDate)}</td>
                             <td>{it.category || "-"}</td>
+                            <td>{it.quantity}</td>
+                            <td>{fmtDate(it.checkInDate)}</td>
+                            <td>
+                              {fmtDate(it.expiryDate)}
+                              {st === "expired" ? (
+                                <span class="badge bg-danger ms-2">Expired</span>
+                              ) : st === "soon" ? (
+                                <span class="badge bg-warning text-dark ms-2">Expiring Soon</span>
+                              ) : null}
+                            </td>
                             <td class="text-end">
                               <a href={`/stock/${it.id}/edit`} class="btn btn-sm btn-outline-secondary me-1">
                                 <i class="bi bi-pencil"></i>
@@ -87,7 +98,8 @@ export const FoodItemsPage: FC<{ groups: LocationGroup[] }> = ({ groups }) => {
                               </form>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
