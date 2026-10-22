@@ -2,14 +2,24 @@ import { Hono } from "hono";
 import { eq, asc } from "drizzle-orm";
 import { getDb } from "../db/client";
 import { foodStock } from "../db/schema";
+import type { FoodStock } from "../db/schema";
 import type { Env, Variables } from "../lib/types";
 import { Layout } from "../views/layout";
-import {
-  ResourceList,
-  ResourceForm,
-  fmtDate,
-  type Field,
-} from "../views/resource";
+import { ResourceForm, fmtDate, type Field } from "../views/resource";
+import { FoodItemsPage, type LocationGroup } from "../views/stock";
+
+// Orders location headers: freezers, cupboards (numeric), shelf, undercounters,
+// then anything else, then "Unassigned" last.
+function locationSortKey(loc: string): [number, number, string] {
+  const l = loc.toLowerCase();
+  const num = parseInt((l.match(/_(\d+)/) || [])[1] || "0", 10);
+  if (l.startsWith("freezer")) return [0, num, l];
+  if (l.startsWith("cupboard")) return [1, num, l];
+  if (l.startsWith("shelf")) return [2, num, l];
+  if (l.startsWith("undercounter")) return [3, num, l];
+  if (l === "unassigned") return [9, 0, l];
+  return [4, num, l];
+}
 
 const stock = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -27,21 +37,26 @@ stock.get("/", async (c) => {
     .select()
     .from(foodStock)
     .orderBy(asc(foodStock.expiryDate));
+
+  // Group items by location
+  const map = new Map<string, FoodStock[]>();
+  for (const r of rows as FoodStock[]) {
+    const loc = r.location && r.location.trim() ? r.location : "Unassigned";
+    if (!map.has(loc)) map.set(loc, []);
+    map.get(loc)!.push(r);
+  }
+
+  const groups: LocationGroup[] = Array.from(map.entries())
+    .map(([location, items]) => ({ location, items }))
+    .sort((a, b) => {
+      const ka = locationSortKey(a.location);
+      const kb = locationSortKey(b.location);
+      return ka[0] - kb[0] || ka[1] - kb[1] || ka[2].localeCompare(kb[2]);
+    });
+
   return c.html(
     <Layout title="Food Stock" user={c.get("user")} active="stock">
-      <ResourceList
-        title="Food Stock"
-        basePath="/stock"
-        addLabel="Add Stock Item"
-        columns={[
-          { key: "itemName", label: "Item Name" },
-          { key: "quantity", label: "Quantity" },
-          { key: "expiryDate", label: "Expiry Date", render: (r) => fmtDate(r.expiryDate as string) },
-          { key: "location", label: "Location" },
-          { key: "category", label: "Category" },
-        ]}
-        rows={rows as unknown as Record<string, unknown>[]}
-      />
+      <FoodItemsPage groups={groups} />
     </Layout>
   );
 });
