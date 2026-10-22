@@ -40,7 +40,7 @@ auth.post("/login", async (c) => {
   if (!account || !ok) {
     return c.html(
       <Layout title="Log in">
-        <LoginPage error="Invalid email or password." />
+        <LoginPage error="Invalid username or password." />
       </Layout>,
       401
     );

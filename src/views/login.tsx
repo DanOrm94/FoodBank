@@ -14,9 +14,9 @@ export const LoginPage: FC<{ error?: string }> = ({ error }) => {
             ) : null}
             <form method="post" action="/login">
               <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label">Username</label>
                 <input
-                  type="email"
+                  type="text"
                   name="email"
                   class="form-control"
                   required
@@ -36,9 +36,7 @@ export const LoginPage: FC<{ error?: string }> = ({ error }) => {
                 Log in
               </button>
             </form>
-            <p class="text-muted small text-center mt-3 mb-0">
-              Seeded admin: admin@manchestersettlement.org.uk / password123
-            </p>
+
           </div>
         </div>
       </div>

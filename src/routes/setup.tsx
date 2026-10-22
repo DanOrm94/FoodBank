@@ -5,43 +5,50 @@ import { accounts } from "../db/schema";
 import { hashPassword } from "../lib/auth";
 import type { Env, Variables } from "../lib/types";
 
-// One-time setup: creates the seed admin account with a properly hashed
-// password. PBKDF2 hashing must happen at runtime (needs Web Crypto + a
-// random salt), so it cannot live in static seed.sql.
+// One-time setup: creates (or resets) the admin account with a properly hashed
+// password. PBKDF2 hashing must happen at runtime (needs Web Crypto + a random
+// salt), so it cannot live in static seed.sql.
 //
-// Visit /setup once after deploying & seeding. Idempotent: if the admin
-// already exists, it does nothing.
+// Visit /setup once after deploying & seeding.
+// If the admin already exists, its password is reset to ADMIN_PASSWORD.
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const ADMIN_EMAIL = "admin@manchestersettlement.org.uk";
-const ADMIN_PASSWORD = "password123";
-const ADMIN_NAME = "Aileen Bayley";
+// Login identifier is stored in the `email` column but can be a plain username.
+const ADMIN_LOGIN = "admin";
+const ADMIN_PASSWORD = "Openshaw1";
+const ADMIN_NAME = "Administrator";
 
 app.get("/", async (c) => {
   const db = getDb(c.env.DB);
+  const passwordHash = await hashPassword(ADMIN_PASSWORD);
+
   const existing = await db
     .select()
     .from(accounts)
-    .where(eq(accounts.email, ADMIN_EMAIL))
+    .where(eq(accounts.email, ADMIN_LOGIN))
     .limit(1);
 
   if (existing[0]) {
+    await db
+      .update(accounts)
+      .set({ passwordHash, name: ADMIN_NAME, role: "admin" })
+      .where(eq(accounts.email, ADMIN_LOGIN));
     return c.text(
-      `Admin account already exists (${ADMIN_EMAIL}). You can log in at /login.`
+      `Admin account updated. Log in at /login with:\n` +
+        `  username: ${ADMIN_LOGIN}\n  password: ${ADMIN_PASSWORD}`
     );
   }
 
-  const passwordHash = await hashPassword(ADMIN_PASSWORD);
   await db.insert(accounts).values({
-    email: ADMIN_EMAIL,
+    email: ADMIN_LOGIN,
     passwordHash,
     name: ADMIN_NAME,
     role: "admin",
   });
 
   return c.text(
-    `Setup complete. Admin created: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}\n` +
-      `Log in at /login and change this password.`
+    `Setup complete. Log in at /login with:\n` +
+      `  username: ${ADMIN_LOGIN}\n  password: ${ADMIN_PASSWORD}`
   );
 });
 
