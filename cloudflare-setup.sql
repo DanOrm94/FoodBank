@@ -111,16 +111,6 @@ INSERT INTO bundles (name, description, status) VALUES
   ('Family Pack (4)', 'Standard bundle for a household of 4', 'active'),
   ('Single Person Pack', 'Essentials for one person', 'active'),
   ('Breakfast Bundle', 'Cereals and spreads', 'distributed');
-INSERT INTO bundle_items (bundle_id, stock_id, quantity) VALUES
-  (1, 15, 2),
-  (1, 16, 1),
-  (1, 17, 2),
-  (1, 18, 1),
-  (2, 8, 1),
-  (2, 9, 1),
-  (3, 1, 1),
-  (3, 3, 1),
-  (3, 9, 1);
 INSERT INTO users (name, family_size, contact, dietary_requirements) VALUES
   ('Mercy fremah sarfo', 3, 0, 'none'),
   ('Abla Anani', 3, 0, 'no dairy for Mum but she will take for the children'),
@@ -138,29 +128,50 @@ INSERT INTO users (name, family_size, contact, dietary_requirements) VALUES
   ('John Hall', 2, 0, 'unknown'),
   ('Debra White', 3, 0, 'none'),
   ('Elizabeth Ooto', 2, 0, 'No Pork');
-INSERT INTO assignments (user_id, bundle_id, assigned_date, collected) VALUES
-  (1, NULL, '2026-10-01', 1),
-  (2, 1, '2026-10-22', 0),
-  (3, NULL, '2026-10-15', 1),
-  (4, NULL, '2026-10-08', 1),
-  (5, 1, '2026-10-22', 0),
-  (6, NULL, '2026-02-26', 1),
-  (7, NULL, '2026-09-17', 1),
-  (8, NULL, '2026-01-29', 1),
-  (9, NULL, '2026-08-13', 1),
-  (10, NULL, '2026-07-23', 1),
-  (11, 2, '2026-10-22', 0),
-  (12, 2, '2026-10-22', 0),
-  (13, NULL, '2026-07-30', 1),
-  (14, 1, '2026-10-22', 0),
-  (15, 1, '2026-10-22', 0),
-  (16, NULL, '2026-08-20', 1);
-INSERT INTO attendance (user_id, visit_date, notes) VALUES
-  (2, '2026-10-22', 'Collected bundle'),
-  (5, '2026-10-22', 'Collected bundle'),
-  (1, '2026-10-01', 'Collected bundle'),
-  (11, '2026-10-22', NULL),
-  (12, '2026-10-22', NULL);
+INSERT INTO bundle_items (bundle_id, stock_id, quantity)
+SELECT b.id, s.id, v.qty FROM (VALUES
+  ('Family Pack (4)', 'baked beans', 2),
+  ('Family Pack (4)', 'chopped tomatoes', 1),
+  ('Family Pack (4)', 'pasta 500g', 2),
+  ('Family Pack (4)', 'long grain rice 1kg', 1),
+  ('Single Person Pack', 'Rice pudding', 1),
+  ('Single Person Pack', 'peanut butter', 1),
+  ('Breakfast Bundle', 'Kellogs Tresor', 1),
+  ('Breakfast Bundle', 'mighty malties', 1),
+  ('Breakfast Bundle', 'peanut butter', 1)
+) AS v(bundle, item, qty)
+JOIN bundles b ON b.name = v.bundle
+JOIN food_stock s ON s.item_name = v.item;
+INSERT INTO assignments (user_id, bundle_id, assigned_date, collected)
+SELECT u.id, b.id, v.d, v.c FROM (VALUES
+  ('Mercy fremah sarfo', NULL, '2026-10-01', 1),
+  ('Abla Anani', 'Family Pack (4)', '2026-10-22', 0),
+  ('Linda Cleary', NULL, '2026-10-15', 1),
+  ('Karen McDremott', NULL, '2026-10-08', 1),
+  ('Lisa Smith', 'Family Pack (4)', '2026-10-22', 0),
+  ('Anne Crawford', NULL, '2026-02-26', 1),
+  ('Janice Lancaster', NULL, '2026-09-17', 1),
+  ('Doreen Grafton', NULL, '2026-01-29', 1),
+  ('Julie Syrimis', NULL, '2026-08-13', 1),
+  ('Olivia Durand', NULL, '2026-07-23', 1),
+  ('Naomi Doye', 'Single Person Pack', '2026-10-22', 0),
+  ('susan Fox', 'Single Person Pack', '2026-10-22', 0),
+  ('ella dankwah', NULL, '2026-07-30', 1),
+  ('John Hall', 'Family Pack (4)', '2026-10-22', 0),
+  ('Debra White', 'Family Pack (4)', '2026-10-22', 0),
+  ('Elizabeth Ooto', NULL, '2026-08-20', 1)
+) AS v(uname, bname, d, c)
+JOIN users u ON u.name = v.uname
+LEFT JOIN bundles b ON b.name = v.bname;
+INSERT INTO attendance (user_id, visit_date, notes)
+SELECT u.id, v.d, v.n FROM (VALUES
+  ('Abla Anani', '2026-10-22', 'Collected bundle'),
+  ('Lisa Smith', '2026-10-22', 'Collected bundle'),
+  ('Mercy fremah sarfo', '2026-10-01', 'Collected bundle'),
+  ('Naomi Doye', '2026-10-22', NULL),
+  ('susan Fox', '2026-10-22', NULL)
+) AS v(uname, d, n)
+JOIN users u ON u.name = v.uname;
 INSERT INTO volunteers (name, email, phone, role, availability, active) VALUES
   ('Emma Taylor', 'emma.taylor@example.com', '07700900101', 'Driver', 'Mon, Wed', 1),
   ('James Lee', 'james.lee@example.com', '07700900102', 'Sorter', 'Tue, Thu', 1),
