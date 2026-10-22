@@ -9,8 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "foodbank-db"
-# Replace with your real database_id after running: wrangler d1 create foodbank-db
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "cfcef906-9000-45c2-84af-90a2fd8e5bbc"
 migrations_dir = "migrations"
 
 [observability]
