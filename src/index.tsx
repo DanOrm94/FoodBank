@@ -4,6 +4,7 @@ import { getDb } from "./db/client";
 import { foodStock } from "./db/schema";
 import type { Env, Variables } from "./lib/types";
 import { loadUser, requireAuth } from "./middleware/auth";
+import { csrf } from "./middleware/csrf";
 import { Layout } from "./views/layout";
 import { Dashboard } from "./views/dashboard";
 import authRoutes from "./routes/auth";
@@ -18,6 +19,10 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // Populate current user on every request
 app.use("*", loadUser);
+
+// CSRF protection: validates tokens on unsafe methods and auto-injects the
+// hidden token field into HTML forms on GET responses.
+app.use("*", csrf);
 
 // Public auth + setup routes
 app.route("/", authRoutes);

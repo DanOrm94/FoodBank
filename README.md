@@ -44,11 +44,17 @@ npx wrangler d1 create foodbank-db
 ```
 Copy the returned `database_id` into `wrangler.toml` (replace `REPLACE_WITH_YOUR_D1_DATABASE_ID`).
 
-### 3. Set the session secret
+### 3. Set the secrets
 ```
-npx wrangler secret put SESSION_SECRET
+npx wrangler secret put SESSION_SECRET   # REQUIRED, >=16 random chars
+npx wrangler secret put SETUP_TOKEN      # REQUIRED to use /setup
+npx wrangler secret put ADMIN_USERNAME   # optional, defaults to "admin"
+npx wrangler secret put ADMIN_PASSWORD   # strong password, >=8 chars
 ```
-Enter a long random string.
+Notes:
+- Without `SESSION_SECRET` the app refuses all logins (fails closed).
+- Without `SETUP_TOKEN` the `/setup` route is disabled (returns 404).
+- The admin password is never committed; it comes from `ADMIN_PASSWORD`.
 
 ### 4. Apply the schema + seed data (remote D1)
 ```
@@ -62,12 +68,11 @@ npm run deploy
 ```
 
 ### 6. Create the admin login (one time)
-Visit `https://<your-worker-url>/setup` once. It creates:
+Visit `https://<your-worker-url>/setup?token=<SETUP_TOKEN>` once. It creates
+(or resets) the admin account using `ADMIN_USERNAME` / `ADMIN_PASSWORD`.
 
-- **Email:** `admin@manchestersettlement.org.uk`
-- **Password:** `password123`
-
-Then log in at `/login` and change the password.
+Then log in at `/login`. For safety, rotate `SETUP_TOKEN` (or remove it) after
+you've created the admin so the route goes dark again.
 
 ### Deploying via Cloudflare's GitHub integration
 Connect this repo in the Cloudflare dashboard (Workers & Pages). Set the build
@@ -78,6 +83,20 @@ D1 console), then hit `/setup`.
 
 ## Security notes
 
-- Change the seeded admin password immediately after first login.
-- `SESSION_SECRET` must be set in production; the dev fallback is insecure.
-- Session cookies are `HttpOnly`, `Secure`, `SameSite=Lax`.
+Implemented:
+- Passwords hashed with PBKDF2 (100k iterations, per-password salt, constant-time compare).
+- Sessions are HMAC-signed, `HttpOnly`, `Secure`, `SameSite=Lax` cookies.
+- `SESSION_SECRET` fails closed: no secret, no logins (no insecure fallback).
+- `/setup` is gated by `SETUP_TOKEN` and disabled entirely when it is unset.
+- CSRF protection on all state-changing requests (double-submit token).
+- Basic per-isolate login rate limiting (8 attempts / 15 min per IP).
+- Admin password supplied via secret, never committed.
+- SQL is parameterized (Drizzle); output is auto-escaped (Hono JSX).
+
+Still recommended before/alongside production handover:
+- Per-user accounts with an audit trail (currently a single shared admin).
+- Distributed rate limiting via KV or Durable Objects (current limiter is
+  per-isolate only).
+- A GDPR review: lawful basis, retention policy, and handling of
+  special-category data (dietary/health, religion) for the people recorded.
+- Rotate `SETUP_TOKEN` after initial admin creation.

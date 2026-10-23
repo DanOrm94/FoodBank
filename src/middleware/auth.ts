@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { getCookie } from "hono/cookie";
-import { verifySession } from "../lib/auth";
+import { verifySession, requireSecret } from "../lib/auth";
 import type { Env, Variables } from "../lib/types";
 
 export const SESSION_COOKIE = "fbm_session";
@@ -13,8 +13,13 @@ export const loadUser: MiddlewareHandler<{
   const token = getCookie(c, SESSION_COOKIE);
   let user = null;
   if (token) {
-    const secret = c.env.SESSION_SECRET || "dev-insecure-secret-change-me";
-    user = await verifySession(token, secret);
+    // Fails closed: if SESSION_SECRET is missing, no one is treated as logged in.
+    try {
+      const secret = requireSecret(c.env.SESSION_SECRET);
+      user = await verifySession(token, secret);
+    } catch {
+      user = null;
+    }
   }
   c.set("user", user);
   await next();

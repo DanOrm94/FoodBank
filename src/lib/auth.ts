@@ -1,6 +1,18 @@
 // Password hashing and session cookie helpers using the Web Crypto API.
 // Works natively on Cloudflare Workers (no Node bcrypt needed).
 
+// Returns the configured session secret, or throws if it is missing/too weak.
+// Fails closed: we never fall back to a hard-coded secret, because that would
+// let anyone forge session cookies.
+export function requireSecret(secret: string | undefined | null): string {
+  if (!secret || secret.length < 16) {
+    throw new Error(
+      "SESSION_SECRET is not configured (must be set to a random string of at least 16 characters)."
+    );
+  }
+  return secret;
+}
+
 const PBKDF2_ITERATIONS = 100_000;
 const SALT_BYTES = 16;
 const KEY_BYTES = 32;

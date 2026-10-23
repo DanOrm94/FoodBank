@@ -4,7 +4,14 @@ compatibility_date = "2024-12-18"
 compatibility_flags = ["nodejs_compat"]
 
 # Secrets (set via Cloudflare dashboard or `wrangler secret put`):
-#   SESSION_SECRET  - random string used to sign session cookies
+#   SESSION_SECRET  - REQUIRED. Random string (>=16 chars) used to sign session
+#                     cookies. The app refuses logins if this is unset.
+#   SETUP_TOKEN     - REQUIRED to use /setup. Random string. Visit
+#                     /setup?token=<SETUP_TOKEN> to create/reset the admin.
+#                     If unset, /setup is disabled (returns 404).
+#   ADMIN_USERNAME  - Admin login name used by /setup (default: "admin").
+#   ADMIN_PASSWORD  - Admin password used by /setup (>=8 chars). Set a strong
+#                     value; never commit it.
 
 [[d1_databases]]
 binding = "DB"
