@@ -44,6 +44,7 @@ export const bundleItems = sqliteTable("bundle_items", {
     .notNull()
     .references(() => foodStock.id, { onDelete: "cascade" }),
   quantity: integer("quantity").notNull().default(1),
+  reserve: integer("reserve").notNull().default(0), // reserve units held back for this item
 });
 
 // Registered foodbank users (recipients)

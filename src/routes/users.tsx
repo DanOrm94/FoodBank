@@ -96,6 +96,37 @@ app.post("/:id/assign", async (c) => {
   return c.redirect("/users");
 });
 
+// "Complete Distribution Cycle": marks the user's latest open assignment as
+// collected and records attendance for today. If there is no open assignment,
+// it simply records an attendance visit.
+app.post("/:id/complete-cycle", async (c) => {
+  const id = parseInt(c.req.param("id"), 10);
+  const db = getDb(c.env.DB);
+
+  const latest = await db
+    .select()
+    .from(assignments)
+    .where(eq(assignments.userId, id))
+    .orderBy(desc(assignments.assignedDate), desc(assignments.id))
+    .limit(1);
+
+  const open = latest[0] && !latest[0].collected ? latest[0] : null;
+  if (open) {
+    await db
+      .update(assignments)
+      .set({ collected: true })
+      .where(eq(assignments.id, open.id));
+  }
+
+  await db.insert(attendance).values({
+    userId: id,
+    visitDate: todayISO(),
+    notes: open ? "Distribution cycle completed" : "Visit recorded",
+  });
+
+  return c.redirect("/users");
+});
+
 // Assign page (choose a bundle) — optional richer flow via GET
 app.get("/:id/assign", async (c) => {
   const id = parseInt(c.req.param("id"), 10);

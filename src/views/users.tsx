@@ -100,6 +100,16 @@ export const UsersPage: FC<{ users: UserRow[]; q?: string }> = ({
                           >
                             <i class="bi bi-calendar-check"></i>
                           </a>
+                          <form
+                            method="post"
+                            action={`/users/${u.id}/complete-cycle`}
+                            class="d-inline"
+                            title="Complete Distribution Cycle"
+                          >
+                            <button class="btn btn-sm btn-dark">
+                              <i class="bi bi-check2-all"></i>
+                            </button>
+                          </form>
                           <a
                             href={`/users/${u.id}/edit`}
                             class="btn btn-sm btn-warning text-white"

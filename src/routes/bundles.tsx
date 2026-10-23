@@ -86,6 +86,7 @@ app.get("/:id", async (c) => {
     .select({
       id: bundleItems.id,
       quantity: bundleItems.quantity,
+      reserve: bundleItems.reserve,
       itemName: foodStock.itemName,
       stockId: foodStock.id,
     })
@@ -105,6 +106,9 @@ app.get("/:id", async (c) => {
           </span>
         </h3>
         <div>
+          <a href={`/bundles/${id}/pdf`} class="btn btn-danger btn-sm" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+          </a>
           <a href={`/bundles/${id}/edit`} class="btn btn-outline-secondary btn-sm">Edit</a>
           <a href="/bundles" class="btn btn-outline-secondary btn-sm">Back</a>
         </div>
@@ -116,17 +120,24 @@ app.get("/:id", async (c) => {
         <div class="card-body p-0">
           <table class="table mb-0 align-middle">
             <thead>
-              <tr><th>Item</th><th>Quantity</th><th class="text-end">Actions</th></tr>
+              <tr><th>Item</th><th>Quantity</th><th>Reserve</th><th class="text-end">Actions</th></tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colspan={3} class="text-center text-muted py-3">No items added.</td></tr>
+                <tr><td colspan={4} class="text-center text-muted py-3">No items added.</td></tr>
               ) : (
                 items.map((it) => (
                   <tr>
                     <td>{it.itemName || "(deleted item)"}</td>
                     <td>{it.quantity}</td>
+                    <td>
+                      <span class="badge bg-info text-dark">{it.reserve ?? 0}</span>
+                    </td>
                     <td class="text-end">
+                      <form method="post" action={`/bundles/${id}/items/${it.id}/reserve`} class="d-inline-flex align-items-center me-1">
+                        <input type="number" name="reserve" value={String(it.reserve ?? 0)} min="0" class="form-control form-control-sm me-1" style="width:5rem;" />
+                        <button class="btn btn-sm btn-outline-primary" title="Set Reserve">Set Reserve</button>
+                      </form>
                       <form method="post" action={`/bundles/${id}/items/${it.id}/delete`} class="d-inline">
                         <button class="btn btn-sm btn-outline-danger">Remove</button>
                       </form>
@@ -185,6 +196,68 @@ app.post("/:id/items/:itemId/delete", async (c) => {
   const db = getDb(c.env.DB);
   await db.delete(bundleItems).where(eq(bundleItems.id, itemId));
   return c.redirect(`/bundles/${id}`);
+});
+
+// Set Reserve for a bundle item
+app.post("/:id/items/:itemId/reserve", async (c) => {
+  const id = parseInt(c.req.param("id"), 10);
+  const itemId = parseInt(c.req.param("itemId"), 10);
+  const b = await c.req.parseBody();
+  const reserve = Math.max(0, parseInt(String(b.reserve || "0"), 10) || 0);
+  const db = getDb(c.env.DB);
+  await db.update(bundleItems).set({ reserve }).where(eq(bundleItems.id, itemId));
+  return c.redirect(`/bundles/${id}`);
+});
+
+// Printable PDF view of the bundle (opens the browser print dialog → Save as PDF)
+app.get("/:id/pdf", async (c) => {
+  const id = parseInt(c.req.param("id"), 10);
+  const db = getDb(c.env.DB);
+  const found = await db.select().from(bundles).where(eq(bundles.id, id)).limit(1);
+  const bundle = found[0];
+  if (!bundle) return c.notFound();
+
+  const items = await db
+    .select({
+      quantity: bundleItems.quantity,
+      reserve: bundleItems.reserve,
+      itemName: foodStock.itemName,
+    })
+    .from(bundleItems)
+    .leftJoin(foodStock, eq(bundleItems.stockId, foodStock.id))
+    .where(eq(bundleItems.bundleId, id));
+
+  const rowsHtml = items
+    .map(
+      (it) =>
+        `<tr><td>${(it.itemName || "(item)").replace(/</g, "&lt;")}</td><td style="text-align:center">${it.quantity}</td><td style="text-align:center">${it.reserve ?? 0}</td></tr>`
+    )
+    .join("");
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"><title>${bundle.bundleType} — ${fmtDateLong(bundle.createdDate)}</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; margin: 32px; color: #222; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .meta { color: #555; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 8px 10px; font-size: 13px; }
+  th { background: #f0ad20; color: #fff; text-align: left; }
+  .foot { margin-top: 24px; font-size: 11px; color: #888; }
+  @media print { .no-print { display: none; } }
+</style></head>
+<body onload="window.print()">
+  <h1>${bundle.bundleType}</h1>
+  <div class="meta">Created: ${fmtDateLong(bundle.createdDate)}${bundle.description ? " — " + bundle.description.replace(/</g, "&lt;") : ""}</div>
+  <table>
+    <thead><tr><th>Item</th><th style="text-align:center">Quantity</th><th style="text-align:center">Reserve</th></tr></thead>
+    <tbody>${rowsHtml || '<tr><td colspan="3" style="text-align:center;color:#888">No items</td></tr>'}</tbody>
+  </table>
+  <div class="foot">FoodBankManager — generated ${fmtDateLong(todayISO())}</div>
+  <p class="no-print"><button onclick="window.print()">Print / Save as PDF</button></p>
+</body></html>`;
+
+  return c.html(html);
 });
 
 app.get("/:id/edit", async (c) => {
