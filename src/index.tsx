@@ -82,23 +82,62 @@ app.route("/expenses", expenseRoutes);
 
 app.get("/help", (c) =>
   c.html(
-    <Layout title="Help" user={c.get("user")} active="help">
-      <h3>Help</h3>
-      <div class="card feature-card">
+    <Layout title="Help & Support" user={c.get("user")} active="help">
+      <h2 class="mb-3">Help &amp; Support</h2>
+      <div class="card feature-card mb-4">
         <div class="card-body">
-          <p>
-            Food Bank Manager helps you track food stock, build distribution
-            bundles, and manage registered users, volunteers, and expenses.
+          <p class="mb-0">
+            If you need assistance, please check the FAQs below or contact us at:{" "}
+            <a href="mailto:danielorm@live.co.uk">danielorm@live.co.uk</a>
           </p>
-          <ul>
-            <li><strong>Food Stock</strong> — record items, quantities, expiry dates and storage locations.</li>
-            <li><strong>Food Bundles</strong> — group stock items into bundles for distribution.</li>
-            <li><strong>Users</strong> — manage registered foodbank recipients.</li>
-            <li><strong>Volunteers</strong> — track volunteers and availability.</li>
-            <li><strong>Expenses</strong> — log and categorise expenditure.</li>
-          </ul>
         </div>
       </div>
+
+      <h4 class="mb-3">Frequently Asked Questions (FAQ)</h4>
+      <div class="accordion mb-4" id="faqAccordion">
+        {[
+          {
+            q: "How do I update my account information?",
+            a: 'Navigate to the "Volunteers" page and click "Edit" to update your account details.',
+          },
+          {
+            q: "How do I assign a bundle to a food bank user?",
+            a: 'Go to the "Users" page and click "Assign Bundle" next to the selected user. A form will open, allowing you to choose the bundle you want to assign. Once selected, click "Assign" to complete the process.',
+          },
+          {
+            q: "How do I record food bank user attendance?",
+            a: 'Visit the "Users" page and click "Complete Distribution Cycle". This action will automatically record the attendance of the user based on their bundle assignment, which can be viewed by clicking the "Attendance" button.',
+          },
+          {
+            q: "How do I add reserve food items for food items in a bundle?",
+            a: "Go to the Food Bundles page and select your desired bundle by clicking the Details button (blue icon). This opens the bundle details page, with a Bundle Information card and an Items in Bundle card. In the Items in Bundle card, locate the item you want to assign reserves to and click Set Reserve. A popup lets you assign as many reserve items as needed.",
+          },
+          {
+            q: "How do I generate and print a PDF for a food bundle?",
+            a: "Navigate to the Food Bundles page and find the bundle you want to export. Click the Details button (blue icon) to open its detailed view. Inside, click the Export to PDF button to generate a printable PDF of the bundle contents, including all items and their reserve assignments. The PDF can then be downloaded or printed directly from your browser.",
+          },
+        ].map((item, i) => (
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target={`#faq-${i}`}
+              >
+                {item.q}
+              </button>
+            </h2>
+            <div id={`faq-${i}`} class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">{item.a}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p class="text-center text-muted small">
+        © 2024 - FoodBankManager - Working together to support our community.
+      </p>
     </Layout>
   )
 );
