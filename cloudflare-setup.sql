@@ -336,4 +336,6 @@ INSERT INTO expenses (supplier, description, amount, payment_method, date) VALUE
 ('Fareshare','food delivery',57.33,'Card','2025-06-26'),
 ('Fareshare','faareshare plus',17.17,'Card','2025-06-26'),
 ('Fareshare','food delivery',71.66,'Card','2025-07-03'),
-('Fareshare','fareshare plus',24.46,'Card','2025-07-03');
+('Fareshare','fareshare plus',24.46,'Card','2025-07-03'),
+('General','asda',59.00,'Card','2025-04-17'),
+('General','asda',59.00,'Card','2025-04-10');
