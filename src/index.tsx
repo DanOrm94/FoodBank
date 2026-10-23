@@ -39,9 +39,37 @@ app.get("/", async (c) => {
     .from(foodStock)
     .orderBy(asc(foodStock.expiryDate))
     .limit(25);
+
+  // At-a-glance counts via a single grouped query where possible.
+  const counts = await c.env.DB.prepare(
+    `SELECT
+       (SELECT COUNT(*) FROM food_stock) AS stockItems,
+       (SELECT COUNT(*) FROM users) AS users,
+       (SELECT COUNT(*) FROM volunteers) AS volunteers,
+       (SELECT COUNT(*) FROM bundles) AS bundles,
+       (SELECT COUNT(*) FROM food_stock WHERE expiry_date IS NOT NULL AND expiry_date < date('now')) AS expired,
+       (SELECT COUNT(*) FROM food_stock WHERE expiry_date IS NOT NULL AND expiry_date >= date('now') AND expiry_date <= date('now','+30 day')) AS expiringSoon`
+  ).first<{
+    stockItems: number;
+    users: number;
+    volunteers: number;
+    bundles: number;
+    expired: number;
+    expiringSoon: number;
+  }>();
+
+  const stats = {
+    stockItems: counts?.stockItems ?? 0,
+    users: counts?.users ?? 0,
+    volunteers: counts?.volunteers ?? 0,
+    bundles: counts?.bundles ?? 0,
+    expired: counts?.expired ?? 0,
+    expiringSoon: counts?.expiringSoon ?? 0,
+  };
+
   return c.html(
     <Layout title="Home" user={c.get("user")} active="home">
-      <Dashboard expiring={expiring} />
+      <Dashboard expiring={expiring} stats={stats} />
     </Layout>
   );
 });
