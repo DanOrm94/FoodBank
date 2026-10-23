@@ -43,11 +43,54 @@ export const Layout: FC<LayoutProps> = ({ title, user, active, children }) => {
               background: linear-gradient(90deg, #f6b528, #f0ad20);
               color: #fff; border-radius: .5rem; padding: 2rem;
             }
-            .feature-card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+            .feature-card {
+              border: none; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+              transition: transform .15s ease, box-shadow .15s ease;
+            }
+            .feature-card:hover {
+              transform: translateY(-3px);
+              box-shadow: 0 .5rem 1rem rgba(0,0,0,.12);
+            }
             .feature-card .bi { font-size: 2.5rem; }
             .section-header-warn {
               background: #f0ad20; color: #fff; font-weight: 600;
               border-radius: .4rem .4rem 0 0; padding: .6rem 1rem;
+            }
+
+            /* Button polish: subtle lift + press feedback */
+            .btn {
+              transition: transform .12s ease, box-shadow .12s ease,
+                          filter .12s ease;
+            }
+            .btn:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 .25rem .5rem rgba(0,0,0,.15);
+              filter: brightness(1.05);
+            }
+            .btn:active {
+              transform: translateY(0);
+              box-shadow: 0 .1rem .2rem rgba(0,0,0,.15) inset;
+              filter: brightness(.97);
+            }
+            .btn:focus-visible {
+              outline: 3px solid rgba(13,110,253,.35);
+              outline-offset: 2px;
+            }
+            /* Small icon action buttons: gentler effect */
+            .btn-sm.btn-outline-secondary:hover,
+            .btn-sm.btn-outline-danger:hover { transform: translateY(-1px); }
+
+            /* Clickable summary stat cards feel interactive */
+            a .card { transition: transform .15s ease, box-shadow .15s ease; }
+            a:hover .card {
+              transform: translateY(-3px);
+              box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+            }
+
+            /* Respect users who prefer no motion (accessibility) */
+            @media (prefers-reduced-motion: reduce) {
+              .btn, .feature-card, a .card { transition: none; }
+              .btn:hover, .feature-card:hover, a:hover .card { transform: none; }
             }
           `,
           }}
