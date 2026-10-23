@@ -1,44 +1,49 @@
 import { Hono } from "hono";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb } from "../db/client";
 import { bundles, bundleItems, foodStock } from "../db/schema";
 import type { Env, Variables } from "../lib/types";
 import { Layout } from "../views/layout";
-import { ResourceList, ResourceForm, type Field } from "../views/resource";
+import { ResourceForm, type Field } from "../views/resource";
+import { BundlesPage, type BundleRow } from "../views/bundles";
+import { todayISO, fmtDateLong } from "../lib/status";
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const fields = (row?: Record<string, unknown>): Field[] => [
-  { name: "name", label: "Bundle Name", required: true, value: row?.name as string },
-  { name: "description", label: "Description", type: "textarea", value: row?.description as string },
   {
-    name: "status",
-    label: "Status",
+    name: "bundleType",
+    label: "Bundle Type",
     type: "select",
-    value: (row?.status as string) || "active",
+    value: (row?.bundleType as string) || "General Bundle",
     options: [
-      { value: "active", label: "Active" },
-      { value: "distributed", label: "Distributed" },
+      { value: "General Bundle", label: "General Bundle" },
+      { value: "Halal Bundle", label: "Halal Bundle" },
     ],
   },
+  { name: "createdDate", label: "Creation Date", type: "date", value: (row?.createdDate as string) || todayISO() },
+  { name: "name", label: "Bundle Name (optional)", value: row?.name as string },
+  { name: "description", label: "Description", type: "textarea", value: row?.description as string },
 ];
 
+// List: date • type with item count, newest first
 app.get("/", async (c) => {
-  const db = getDb(c.env.DB);
-  const rows = await db.select().from(bundles).orderBy(desc(bundles.id));
+  const result = await c.env.DB.prepare(
+    `SELECT
+       b.id           AS id,
+       b.bundle_type  AS bundleType,
+       b.created_date AS createdDate,
+       COUNT(bi.id)   AS itemCount
+     FROM bundles b
+     LEFT JOIN bundle_items bi ON bi.bundle_id = b.id
+     GROUP BY b.id
+     ORDER BY b.created_date ASC, b.id ASC`
+  ).all<BundleRow>();
+  const rows = result.results ?? [];
+
   return c.html(
     <Layout title="Food Bundles" user={c.get("user")} active="bundles">
-      <ResourceList
-        title="Food Bundles"
-        basePath="/bundles"
-        addLabel="Add Bundle"
-        columns={[
-          { key: "name", label: "Name" },
-          { key: "description", label: "Description" },
-          { key: "status", label: "Status" },
-        ]}
-        rows={rows as unknown as Record<string, unknown>[]}
-      />
+      <BundlesPage bundles={rows} />
     </Layout>
   );
 });
@@ -46,7 +51,7 @@ app.get("/", async (c) => {
 app.get("/new", (c) =>
   c.html(
     <Layout title="New Bundle" user={c.get("user")} active="bundles">
-      <ResourceForm title="Add Bundle" action="/bundles" cancelHref="/bundles" fields={fields()} />
+      <ResourceForm title="Create Bundle" action="/bundles" cancelHref="/bundles" fields={fields()} />
     </Layout>
   )
 );
@@ -54,12 +59,15 @@ app.get("/new", (c) =>
 app.post("/", async (c) => {
   const b = await c.req.parseBody();
   const db = getDb(c.env.DB);
+  const bundleType = String(b.bundleType || "General Bundle");
   const res = await db
     .insert(bundles)
     .values({
-      name: String(b.name || ""),
+      name: String(b.name || "") || bundleType,
+      bundleType,
+      createdDate: String(b.createdDate || "") || todayISO(),
       description: String(b.description || "") || null,
-      status: String(b.status || "active"),
+      status: "active",
     })
     .returning({ id: bundles.id });
   const newId = res[0]?.id;
@@ -88,16 +96,20 @@ app.get("/:id", async (c) => {
   const stockOptions = await db.select().from(foodStock).orderBy(foodStock.itemName);
 
   return c.html(
-    <Layout title={bundle.name} user={c.get("user")} active="bundles">
+    <Layout title={bundle.bundleType} user={c.get("user")} active="bundles">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="mb-0">{bundle.name}</h3>
+        <h3 class="mb-0">
+          {fmtDateLong(bundle.createdDate)}{" "}
+          <span class={`badge ${bundle.bundleType === "Halal Bundle" ? "bg-success" : "bg-primary"}`}>
+            {bundle.bundleType}
+          </span>
+        </h3>
         <div>
           <a href={`/bundles/${id}/edit`} class="btn btn-outline-secondary btn-sm">Edit</a>
           <a href="/bundles" class="btn btn-outline-secondary btn-sm">Back</a>
         </div>
       </div>
-      <p class="text-muted">{bundle.description || "No description"}</p>
-      <span class="badge bg-secondary mb-3">{bundle.status}</span>
+      {bundle.description ? <p class="text-muted">{bundle.description}</p> : null}
 
       <div class="card feature-card mb-3">
         <div class="section-header-warn">Items in Bundle</div>
@@ -196,12 +208,14 @@ app.post("/:id", async (c) => {
   const id = parseInt(c.req.param("id"), 10);
   const b = await c.req.parseBody();
   const db = getDb(c.env.DB);
+  const bundleType = String(b.bundleType || "General Bundle");
   await db
     .update(bundles)
     .set({
-      name: String(b.name || ""),
+      name: String(b.name || "") || bundleType,
+      bundleType,
+      createdDate: String(b.createdDate || "") || null,
       description: String(b.description || "") || null,
-      status: String(b.status || "active"),
     })
     .where(eq(bundles.id, id));
   return c.redirect(`/bundles/${id}`);

@@ -27,8 +27,10 @@ export const foodStock = sqliteTable("food_stock", {
 export const bundles = sqliteTable("bundles", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
+  bundleType: text("bundle_type").notNull().default("General Bundle"), // General Bundle | Halal Bundle
+  createdDate: text("created_date"), // creation date shown on the list, ISO yyyy-mm-dd
   description: text("description"),
-  status: text("status").notNull().default("active"), // active | distributed
+  status: text("status").notNull().default("active"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 

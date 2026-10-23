@@ -42,6 +42,19 @@ export function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+// Formats as "15 Jul 2025" (used on the Food Bundles list).
+export function fmtDateLong(iso?: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso);
+  return `${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export type ExpiryState = "expired" | "soon" | "ok";
 
 // Classifies an expiry date relative to today.
