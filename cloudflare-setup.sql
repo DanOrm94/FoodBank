@@ -1,3 +1,15 @@
+-- Clean reset so the script is fully idempotent and always builds the current
+-- schema. Child tables are dropped before parents (FK order). The `accounts`
+-- table is intentionally NOT dropped, so your admin login is preserved.
+DROP TABLE IF EXISTS attendance;
+DROP TABLE IF EXISTS assignments;
+DROP TABLE IF EXISTS bundle_items;
+DROP TABLE IF EXISTS expenses;
+DROP TABLE IF EXISTS bundles;
+DROP TABLE IF EXISTS food_stock;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS volunteers;
+
 CREATE TABLE IF NOT EXISTS accounts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE,
