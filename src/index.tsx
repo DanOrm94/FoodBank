@@ -88,4 +88,14 @@ app.notFound((c) =>
   )
 );
 
+// Surface server errors instead of a bare 500, and log the stack to the
+// Worker logs for diagnosis.
+app.onError((err, c) => {
+  console.error("Unhandled error:", err?.stack || err);
+  return c.text(
+    `Server error: ${err instanceof Error ? err.message : String(err)}`,
+    500
+  );
+});
+
 export default app;
