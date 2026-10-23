@@ -69,10 +69,13 @@ CREATE TABLE IF NOT EXISTS volunteers (
 );
 CREATE TABLE IF NOT EXISTS expenses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  supplier TEXT,
   description TEXT NOT NULL,
   amount REAL NOT NULL DEFAULT 0,
-  category TEXT,
+  payment_method TEXT,
   date TEXT,
+  category TEXT,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_food_stock_expiry ON food_stock(expiry_date);
@@ -309,8 +312,28 @@ INSERT INTO volunteers (name, email, phone, role, availability, active) VALUES
 ('James Lee','james.lee@example.com','07700900102','Sorter','Tue, Thu',1),
 ('Priya Patel','priya.patel@example.com','07700900103','Front Desk','Fri',1),
 ('Tom Clark',NULL,'07700900104','Driver','Weekends',0);
-INSERT INTO expenses (description, amount, category, date) VALUES
-('Van fuel',45.80,'Transport','2026-09-01'),
-('Storage shelving',120.00,'Equipment','2026-08-20'),
-('Cleaning supplies',18.50,'Consumables','2026-09-10'),
-('Printer paper & labels',22.30,'Office','2026-09-15');
+INSERT INTO expenses (supplier, description, amount, payment_method, date) VALUES
+('Fareshare','food delivery',47.00,'Card','2025-04-10'),
+('Fareshare','food delivery',50.00,'Card','2025-04-17'),
+('Fareshare','food delivery',36.00,'Card','2025-04-23'),
+('Fareshare','fare share plus',35.00,'Card','2025-04-23'),
+('Fareshare','fare share plus',31.00,'Card','2025-04-10'),
+('Fareshare','fareshareplus',6.00,'Card','2025-04-17'),
+('Fareshare','food delivery',40.36,'Card','2025-05-01'),
+('Fareshare','Fareshare plus',30.17,'Card','2025-05-01'),
+('Fareshare','food delivery',52.22,'Card','2025-05-08'),
+('Fareshare','fareshare plus',32.45,'Card','2025-05-08'),
+('Fareshare','food delivery',50.35,'Card','2025-05-15'),
+('Fareshare','fareshare plus',7.07,'Card','2025-05-15'),
+('Fareshare','food delivery',66.65,'Card','2025-05-29'),
+('Fareshare','fareshare plus',27.26,'Card','2025-05-29'),
+('Fareshare','food delivery',45.12,'Card','2025-06-05'),
+('Fareshare','fareshare plus',29.88,'Card','2025-06-05'),
+('Fareshare','food delivery',44.94,'Card','2025-06-12'),
+('Fareshare','fareshare plus',12.03,'Card','2025-06-12'),
+('Fareshare','food delivery',60.83,'Card','2025-06-19'),
+('Fareshare','fareshare plus',15.59,'Card','2025-06-19'),
+('Fareshare','food delivery',57.33,'Card','2025-06-26'),
+('Fareshare','faareshare plus',17.17,'Card','2025-06-26'),
+('Fareshare','food delivery',71.66,'Card','2025-07-03'),
+('Fareshare','fareshare plus',24.46,'Card','2025-07-03');

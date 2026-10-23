@@ -97,13 +97,18 @@ export const volunteers = sqliteTable("volunteers", {
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-// Expenses
+// Expenses (grouped by supplier on the list page)
 export const expenses = sqliteTable("expenses", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  supplier: text("supplier"), // vendor/group, e.g. "Fareshare"
   description: text("description").notNull(),
   amount: real("amount").notNull().default(0),
+  paymentMethod: text("payment_method"), // Card / Cash / etc.
+  date: text("date"), // payment date, ISO yyyy-mm-dd
   category: text("category"),
-  date: text("date"), // ISO yyyy-mm-dd
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }), // optional "Food Bank User" this expense relates to
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
